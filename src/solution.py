@@ -3,8 +3,17 @@ import numpy as np
 
 
 class Geometry:
-    def __init__():
+    def __init__(self):
         return
+
+    def homogenization(self, x, homo_factor):
+        return
+
+    def zeroVector(self, dims, axis=0):
+        if axis == 0:
+            return np.zeros((1, dims))
+        elif axis == 1:
+            return np.zeros((dims, 1))
 
 
 class PlanarGeometry(object):
@@ -71,8 +80,8 @@ class PlanarGeometry(object):
         return ret
 
 
-class ProjGeometry_Transformation_3D(Geometry):
-    def homogenization(self, x, homo_factor):
+class Estimation_2D(Geometry):
+    def homogenization(self, x, homo_factor=1):
         if homo_factor == 0:
             return np.array([x[0], x[1], 0]).reshape((3, 1))
         else:
@@ -81,7 +90,29 @@ class ProjGeometry_Transformation_3D(Geometry):
             ).reshape((3, 1))
 
     def directLinearTrans(self, x1, x2, homo_factor1=1, homo_factor2=1):
-        x1 = self.homogenization(x1, homo_factor1)
-        x2 = self.homogenization(x2, homo_factor2)
+        x1 = [self.homogenization(x, homo_factor1) for x in x1]
+        x2 = [self.homogenization(x, homo_factor2) for x in x2]
         # x2 = H x1
-        mat = np.mat([[0, 0, 0, -homo_factor2]])
+        mat = [
+            np.mat(
+                [
+                    np.c_[
+                        self.zeroVector(3),
+                        -x2[i][2,0] * x1[i].transpose(),
+                        x2[i][1,0] * x1[i].transpose(),
+                    ].squeeze(),
+                    np.c_[
+                        x2[i][2,0] * x1[i].transpose(),
+                        self.zeroVector(3),
+                        -x2[i][0,0] * x1[i].transpose(),
+                    ].squeeze(),
+                    np.c_[
+                        -x2[i][1,0] * x1[i].transpose(),
+                        x2[i][0,0] * x1[i].transpose(),
+                        self.zeroVector(3),
+                    ].squeeze(),
+                ]
+            )
+            for i in range(4)
+        ]
+        print('hello')
