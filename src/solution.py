@@ -6,7 +6,7 @@ class Geometry:
     def __init__(self):
         return
 
-    def homogenization(self, x, homo_factor):
+    def _homogenization(self, x, homo_factor):
         return
 
     def zeroVector(self, dims, axis=0):
@@ -19,16 +19,16 @@ class Geometry:
 class PlanarGeometry(object):
     def point_lies_on_theline(self, x, line):
         x = x.transpose()
-        assert x.shape[0] == 3 and x.shape == line.shape, 'incorrect input shape'
+        assert x.shape[0] == 3 and x.shape == line.shape, "incorrect input shape"
         return False if np.dot(x, line) else True
 
     def intersection_of_lines(self, line1, line2):
         line1 = line1.transpose()
         line2 = line2.transpose()
-        return np.kron(line1, line2)
+        return np.cross(line1, line2)
 
     def line_through_points(self, x1, x2):
-        return np.kron(x1, x2)
+        return np.cross(x1, x2)
 
     def line_tan2C(self, point, conic):
         """二次曲线过x的切线"""
@@ -81,7 +81,7 @@ class PlanarGeometry(object):
 
 
 class Estimation_2D(Geometry):
-    def homogenization(self, x, homo_factor=1):
+    def _homogenization(self, x, homo_factor=1):
         if homo_factor == 0:
             return np.array([x[0], x[1], 0]).reshape((3, 1))
         else:
@@ -93,26 +93,90 @@ class Estimation_2D(Geometry):
         x1 = [self.homogenization(x, homo_factor1) for x in x1]
         x2 = [self.homogenization(x, homo_factor2) for x in x2]
         # x2 = H x1
-        mat = [
+        mat_list = [
             np.mat(
                 [
                     np.c_[
                         self.zeroVector(3),
-                        -x2[i][2,0] * x1[i].transpose(),
-                        x2[i][1,0] * x1[i].transpose(),
+                        -x2[i][2, 0] * x1[i].transpose(),
+                        x2[i][1, 0] * x1[i].transpose(),
                     ].squeeze(),
                     np.c_[
-                        x2[i][2,0] * x1[i].transpose(),
+                        x2[i][2, 0] * x1[i].transpose(),
                         self.zeroVector(3),
-                        -x2[i][0,0] * x1[i].transpose(),
+                        -x2[i][0, 0] * x1[i].transpose(),
                     ].squeeze(),
                     np.c_[
-                        -x2[i][1,0] * x1[i].transpose(),
-                        x2[i][0,0] * x1[i].transpose(),
+                        -x2[i][1, 0] * x1[i].transpose(),
+                        x2[i][0, 0] * x1[i].transpose(),
                         self.zeroVector(3),
                     ].squeeze(),
                 ]
             )
             for i in range(4)
         ]
-        print('hello')
+        linearly_inde_mat_list = [
+            np.mat(
+                [
+                    np.c_[
+                        self.zeroVector(3),
+                        -x2[i][2, 0] * x1[i].transpose(),
+                        x2[i][1, 0] * x1[i].transpose(),
+                    ].squeeze(),
+                    np.c_[
+                        x2[i][2, 0] * x1[i].transpose(),
+                        self.zeroVector(3),
+                        -x2[i][0, 0] * x1[i].transpose(),
+                    ].squeeze(),
+                ]
+            )
+            for i in range(4)
+        ]
+
+        linearly_inde_mat = np.concatenate(linearly_inde_mat_list)
+        u, s, vh = np.linalg.svd(linearly_inde_mat)
+
+        return vh[:, -1].reshape(3, 3)
+
+    class Cost_Function(Geometry):
+        def _homogenization(self, x, homo_factor=1):
+            if homo_factor == 0:
+                return np.array([x[0], x[1], 0]).reshape((3, 1))
+            else:
+                return np.array(
+                    [x[0] / homo_factor, x[1] / homo_factor, homo_factor]
+                ).reshape((3, 1))
+
+        def algebraic_dist(self, x1: np.ndarray, x2: np.ndarray):
+            x1 = self._homogenization(x1).transpose().reshape((3,))
+            x2 = self._homogenization(x2).transpose().reshape((3,))
+            return np.cross(x1, x2)[0] ** 2 + np.cross(x1, x2)[1] ** 2
+
+        def geometric_dist(self, x, x_m, x_b, x_p, H, single_image=False):
+            """param description
+
+            Support single point or point set
+            Keyword arguments:
+            x -- measured image coordinates of the first image
+            x_m -- estimated values of the points.
+            x_b -- true values of the points
+            x_p -- measured image coordinates of the second image
+            H -- transformation matrix
+            Return: geomtric distance
+            """
+
+            # error in one image
+            if single_image:
+                dist = np.linalg.norm(x_p, np.dot(H, x_b))
+                return dist
+            else:
+                dist1 = np.linalg.norm(x, np.dot(np.linalg.inv(H), x_p))
+                dist2 = np.linalg.norm(x_p, np.dot(H, x))
+                return dist1 + dist2
+
+        def reprojection_error(self, x1, x1_e, x2, x2_e, H_e):
+            x2_e = np.dot(H_e, x1_e)
+
+            dist1 = np.linalg.norm(x1, x1_e)
+            dist2 = np.linalg.norm(x2, x2_e)
+            return dist1 + dist2
