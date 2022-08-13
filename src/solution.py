@@ -17,7 +17,7 @@ class Geometry:
 
 
 class PlanarGeometry(object):
-    def point_lies_on_theline(self, x, line):
+    def point_lies_on_theline(self, x: np.ndarray, line: np.ndarray):
         x = x.transpose()
         assert x.shape[0] == 3 and x.shape == line.shape, "incorrect input shape"
         return False if np.dot(x, line) else True
@@ -90,8 +90,8 @@ class Estimation_2D(Geometry):
             ).reshape((3, 1))
 
     def directLinearTrans(self, x1, x2, homo_factor1=1, homo_factor2=1):
-        x1 = [self.homogenization(x, homo_factor1) for x in x1]
-        x2 = [self.homogenization(x, homo_factor2) for x in x2]
+        x1 = [self._homogenization(x, homo_factor1) for x in x1]
+        x2 = [self._homogenization(x, homo_factor2) for x in x2]
         # x2 = H x1
         mat_list = [
             np.mat(
@@ -138,6 +138,16 @@ class Estimation_2D(Geometry):
 
         return vh[:, -1].reshape(3, 3)
 
+    def apply_trans(self, H, x):
+        """
+        H: transformation matrix
+        x: point to be transformed
+        """
+        if len(x) == 2:
+            x = self._homogenization(x)
+            
+        return np.dot(H, x)
+
     class Cost_Function(Geometry):
         def _homogenization(self, x, homo_factor=1):
             if homo_factor == 0:
@@ -147,10 +157,11 @@ class Estimation_2D(Geometry):
                     [x[0] / homo_factor, x[1] / homo_factor, homo_factor]
                 ).reshape((3, 1))
 
-        def algebraic_dist(self, x1: np.ndarray, x2: np.ndarray):
+        def algebraic_dist(self, x1, x2):
             x1 = self._homogenization(x1).transpose().reshape((3,))
             x2 = self._homogenization(x2).transpose().reshape((3,))
-            return np.cross(x1, x2)[0] ** 2 + np.cross(x1, x2)[1] ** 2
+            a = np.cross(x1, x2)
+            return a[0] ** 2 + a[1] ** 2
 
         def geometric_dist(self, x, x_m, x_b, x_p, H, single_image=False):
             """param description
