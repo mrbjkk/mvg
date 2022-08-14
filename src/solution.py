@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+# import utils
+
 
 class Geometry:
     def __init__(self):
@@ -133,10 +135,46 @@ class Estimation_2D(Geometry):
             for i in range(4)
         ]
 
+        mat = np.concatenate(mat_list)
         linearly_inde_mat = np.concatenate(linearly_inde_mat_list)
         u, s, vh = np.linalg.svd(linearly_inde_mat)
+        # return vh[:, -1].reshape((3, 3))
+        v = vh.transpose()
 
-        return vh[:, -1].reshape(3, 3)
+        y = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1]).reshape((9, 1))
+
+        return v[:, -1].reshape(3, 3)
+
+    def _centroid(self, points):
+        """
+        x -- a list of points
+        """
+        n = len(points)
+        x, y = 0, 0
+        for point in points:
+            x += point[0]
+            y += point[1]
+        return np.array([x / n, y / n])
+
+
+    def _isotropic_scaling(self, x):
+        n = len(x)
+        x = [self._homogenization(x_) for x_ in x]
+        # translate
+        t = self._centroid(x)
+        for i in range(n):
+            x[i][0] -= t[0]
+            x[i][1] -= t[1]
+        # scale
+        # s = 
+        # for x_ in x:
+            
+        print('hello')
+
+        
+    def normalized_DLT(self, x1, x2, homo_factor1=1, homo_factor2=1):
+        self._isotropic_scaling(x1)
+        
 
     def apply_trans(self, H, x):
         """
@@ -156,6 +194,7 @@ class Estimation_2D(Geometry):
                 return np.array(
                     [x[0] / homo_factor, x[1] / homo_factor, homo_factor]
                 ).reshape((3, 1))
+                
 
         def algebraic_dist(self, x1, x2):
             x1 = self._homogenization(x1).transpose().reshape((3,))

@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     # point = pt_2d._homogenization(point)
     x1 = [np.array([1, 1]), np.array([2, 2]), np.array([3, 1]), np.array([4, 2])]
-    x2 = [np.array([1, 2]), np.array([2, 3]), np.array([3, 2]), np.array([4, 4])]
+    x2 = [np.array([1, 2]), np.array([2, 3]), np.array([3, 2]), np.array([4, 3])]
     # x1 = [np.zeros((1, 1)), np.zeros([2, 2]), np.zeros([3, 1]), np.zeros([4, 2])]
     # x2 = [np.zeros((1, 2)), np.zeros([2, 3]), np.zeros([3, 2]), np.zeros([4, 4])]
     # img1 = cv2.imread('data/000000000285.jpg')
@@ -18,11 +18,13 @@ if __name__ == "__main__":
 
     # x = img1[x1[0][0], x1[0][1]]
 
-    transH = pt_2d.directLinearTrans(x1, x2)
-    ret = pt_2d.apply_trans(transH, np.array([2,2]))
+    # transH = pt_2d.directLinearTrans(x1, x2)
+    # ret = pt_2d.apply_trans(transH, np.array([1,1]))
 
     # ret = np.dot(transH, point)
     # x1 = np.array([1, 0])
     # x2 = np.array([0, 1])
     # ret = cost_function.algebraic_dist(x1=x1, x2=x2)
+
+    pt_2d.normalized_DLT(x1, x2)
     print("hello")
