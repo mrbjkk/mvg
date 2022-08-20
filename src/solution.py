@@ -166,7 +166,7 @@ class Estimation_2D(Geometry):
             x[i][0] -= t[0]
             x[i][1] -= t[1]
         # scale
-        # s = 
+        s = 1
         # for x_ in x:
             
         print('hello')
