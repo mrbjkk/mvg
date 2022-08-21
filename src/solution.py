@@ -5,8 +5,8 @@ import numpy as np
 
 
 class Geometry:
-    def __init__(self):
-        return
+    def __init__(self, homo_factor):
+        self.homo_factor = homo_factor
 
     def _homogenization(self, x, homo_factor):
         return
@@ -18,7 +18,7 @@ class Geometry:
             return np.zeros((dims, 1))
 
 
-class PlanarGeometry(object):
+class PlanarGeometry(Geometry(1)):
     def point_lies_on_theline(self, x: np.ndarray, line: np.ndarray):
         x = x.transpose()
         assert x.shape[0] == 3 and x.shape == line.shape, "incorrect input shape"
@@ -82,7 +82,7 @@ class PlanarGeometry(object):
         return ret
 
 
-class Estimation_2D(Geometry):
+class Estimation_2D(Geometry(1)):
     def _homogenization(self, x, homo_factor=1):
         if homo_factor == 0:
             return np.array([x[0], x[1], 0]).reshape((3, 1))
@@ -155,6 +155,9 @@ class Estimation_2D(Geometry):
             x += point[0]
             y += point[1]
         return np.array([x / n, y / n])
+    
+    # def _compute_simitrans(self, x1, x2):
+
 
 
     def _isotropic_scaling(self, x):
@@ -173,7 +176,11 @@ class Estimation_2D(Geometry):
 
         
     def normalized_DLT(self, x1, x2, homo_factor1=1, homo_factor2=1):
-        self._isotropic_scaling(x1)
+        x1 = self._isotropic_scaling(x1)
+        x2 = self._isotropic_scaling(x2)
+        
+        H_estimate = self.directLinearTrans(x1, x2, homo_factor1, homo_factor2)
+        # unnormalize
         
 
     def apply_trans(self, H, x):
