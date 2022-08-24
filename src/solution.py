@@ -5,7 +5,7 @@ import numpy as np
 
 
 class Geometry:
-    def __init__(self, homo_factor):
+    def __init__(self, homo_factor=1):
         self.homo_factor = homo_factor
 
     def _homogenization(self, x, homo_factor):
@@ -18,7 +18,7 @@ class Geometry:
             return np.zeros((dims, 1))
 
 
-class PlanarGeometry(Geometry(1)):
+class PlanarGeometry(Geometry):
     def point_lies_on_theline(self, x: np.ndarray, line: np.ndarray):
         x = x.transpose()
         assert x.shape[0] == 3 and x.shape == line.shape, "incorrect input shape"
@@ -82,7 +82,7 @@ class PlanarGeometry(Geometry(1)):
         return ret
 
 
-class Estimation_2D(Geometry(1)):
+class Estimation_2D(Geometry):
     def _homogenization(self, x, homo_factor=1):
         if homo_factor == 0:
             return np.array([x[0], x[1], 0]).reshape((3, 1))
@@ -148,6 +148,7 @@ class Estimation_2D(Geometry(1)):
     def _centroid(self, points):
         """
         x -- a list of points
+        return the centroid of a set of 2D points
         """
         n = len(points)
         x, y = 0, 0
@@ -155,10 +156,20 @@ class Estimation_2D(Geometry(1)):
             x += point[0]
             y += point[1]
         return np.array([x / n, y / n])
-    
-    # def _compute_simitrans(self, x1, x2):
 
-
+    # def _f1(self, x, points):
+    #     dist = 0
+    #     for point in points:
+    #         dist += np.sqrt((x * point[0]) ** 2 + (x * point[1]) ** 2)
+    #     return dist / len(points) - np.sqrt(2)
+    @staticmethod
+    def _func(x):
+        points = [np.array([1, 1]), np.array([2, 2]),
+                  np.array([3, 1]), np.array([4, 2])]
+        dist = 0
+        for point in points:
+            dist += np.sqrt((x * point[0]) ** 2 + (x * point[1]) ** 2)
+        return dist / len(points) - np.sqrt(2)
 
     def _isotropic_scaling(self, x):
         n = len(x)
@@ -169,29 +180,25 @@ class Estimation_2D(Geometry(1)):
             x[i][0] -= t[0]
             x[i][1] -= t[1]
         # scale
-        s = 1
-        # for x_ in x:
-            
-        print('hello')
+        from scipy.optimize import fsolve
+        scale = fsolve(self._func, 1)[0]
+        # create matrix
+        trans_mat = np.array(
+            [
+                [scale, 0, -t[0][0]],
+                [0, scale, -t[1][0]],
+                [0, 0, 1]
+            ]
+        )
+        x = [np.dot(trans_mat, x_) for x_ in x]
+        return x
 
-        
     def normalized_DLT(self, x1, x2, homo_factor1=1, homo_factor2=1):
         x1 = self._isotropic_scaling(x1)
         x2 = self._isotropic_scaling(x2)
-        
+
         H_estimate = self.directLinearTrans(x1, x2, homo_factor1, homo_factor2)
         # unnormalize
-        
-
-    def apply_trans(self, H, x):
-        """
-        H: transformation matrix
-        x: point to be transformed
-        """
-        if len(x) == 2:
-            x = self._homogenization(x)
-            
-        return np.dot(H, x)
 
     class Cost_Function(Geometry):
         def _homogenization(self, x, homo_factor=1):
@@ -201,7 +208,6 @@ class Estimation_2D(Geometry(1)):
                 return np.array(
                     [x[0] / homo_factor, x[1] / homo_factor, homo_factor]
                 ).reshape((3, 1))
-                
 
         def algebraic_dist(self, x1, x2):
             x1 = self._homogenization(x1).transpose().reshape((3,))
