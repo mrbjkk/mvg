@@ -94,7 +94,7 @@ class Estimation_2D(Geometry):
                 [x[0] / homo_factor, x[1] / homo_factor, homo_factor]
             ).reshape((3, 1))
 
-    def directLinearTrans(self, x1, x2, homo_factor1=1, homo_factor2=1):
+    def direct_linear_trans(self, x1, x2, homo_factor1=1, homo_factor2=1):
         x1 = [self._homogenization(x, homo_factor1) for x in x1]
         x2 = [self._homogenization(x, homo_factor2) for x in x2]
         # x2 = H x1
@@ -181,11 +181,11 @@ class Estimation_2D(Geometry):
 
     def normalized_DLT(self, points1, points2, homo_factor1=1, homo_factor2=1):
         # 计算相似变换
-        T1 = self._isotropic_scaling(points1)
-        T2 = self._isotropic_scaling(points2)
+        T1, T2 = self._isotropic_scaling(points1), self._isotropic_scaling(points2)
         # 齐次化
-        points1 = [self._homogenization(point1) for point1 in points1]
-        points2 = [self._homogenization(point2) for point2 in points2]
+        points1, points2 = [self._homogenization(point1) for point1 in points1], [
+            self._homogenization(point2) for point2 in points2
+        ]
         # 归一化
         points1_t = [np.dot(T1, point1) for point1 in points1]
         points2_t = [np.dot(T1, point1) for point1 in points1]
@@ -194,7 +194,7 @@ class Estimation_2D(Geometry):
             dist += np.linalg.norm(x[:2])
         dist = dist / len(points1_t)
         print('hello')
-        H_e = self.directLinearTrans(points1_t, points2_t, homo_factor1, homo_factor2)
+        H_e = self.direct_linear_trans(points1_t, points2_t, homo_factor1, homo_factor2)
         H = np.dot(np.dot(np.linalg.inv(T2), H_e), T1)
         return H
 
