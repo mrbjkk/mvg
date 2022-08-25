@@ -83,6 +83,9 @@ class PlanarGeometry(Geometry):
 
 
 class Estimation_2D(Geometry):
+    def __init__(self):
+        pass
+
     def _homogenization(self, x, homo_factor=1):
         if homo_factor == 0:
             return np.array([x[0], x[1], 0]).reshape((3, 1))
@@ -157,48 +160,43 @@ class Estimation_2D(Geometry):
             y += point[1]
         return np.array([x / n, y / n])
 
-    # def _f1(self, x, points):
-    #     dist = 0
-    #     for point in points:
-    #         dist += np.sqrt((x * point[0]) ** 2 + (x * point[1]) ** 2)
-    #     return dist / len(points) - np.sqrt(2)
     @staticmethod
-    def _func(x):
-        points = [np.array([1, 1]), np.array([2, 2]),
-                  np.array([3, 1]), np.array([4, 2])]
+    def _func1(x, *args):
         dist = 0
-        for point in points:
+        for point in args[0]:
             dist += np.sqrt((x * point[0]) ** 2 + (x * point[1]) ** 2)
-        return dist / len(points) - np.sqrt(2)
+        return dist / len(args[0]) - np.sqrt(2)
 
-    def _isotropic_scaling(self, x):
-        n = len(x)
-        x = [self._homogenization(x_) for x_ in x]
+    def _isotropic_scaling(self, points):
+        n = len(points)
         # translate
-        t = self._centroid(x)
-        for i in range(n):
-            x[i][0] -= t[0]
-            x[i][1] -= t[1]
+        t = self._centroid(points)
         # scale
         from scipy.optimize import fsolve
-        scale = fsolve(self._func, 1)[0]
+
+        scale = fsolve(self._func1, 1, args=points)[0]
         # create matrix
-        trans_mat = np.array(
-            [
-                [scale, 0, -t[0][0]],
-                [0, scale, -t[1][0]],
-                [0, 0, 1]
-            ]
-        )
-        x = [np.dot(trans_mat, x_) for x_ in x]
-        return x
+        trans_mat = np.array([[scale, 0, -t[0]], [0, scale, -t[1]], [0, 0, 1]])
+        return trans_mat
 
-    def normalized_DLT(self, x1, x2, homo_factor1=1, homo_factor2=1):
-        x1 = self._isotropic_scaling(x1)
-        x2 = self._isotropic_scaling(x2)
-
-        H_estimate = self.directLinearTrans(x1, x2, homo_factor1, homo_factor2)
-        # unnormalize
+    def normalized_DLT(self, points1, points2, homo_factor1=1, homo_factor2=1):
+        # 计算相似变换
+        T1 = self._isotropic_scaling(points1)
+        T2 = self._isotropic_scaling(points2)
+        # 齐次化
+        points1 = [self._homogenization(point1) for point1 in points1]
+        points2 = [self._homogenization(point2) for point2 in points2]
+        # 归一化
+        points1_t = [np.dot(T1, point1) for point1 in points1]
+        points2_t = [np.dot(T1, point1) for point1 in points1]
+        dist = 0
+        for x in points1_t:
+            dist += np.linalg.norm(x[:2])
+        dist = dist / len(points1_t)
+        print('hello')
+        H_e = self.directLinearTrans(points1_t, points2_t, homo_factor1, homo_factor2)
+        H = np.dot(np.dot(np.linalg.inv(T2), H_e), T1)
+        return H
 
     class Cost_Function(Geometry):
         def _homogenization(self, x, homo_factor=1):
