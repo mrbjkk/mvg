@@ -161,6 +161,11 @@ class Estimation_2D(Geometry):
         return np.array([x / n, y / n])
 
     @staticmethod
+    # def _func1(x, *args):
+    #     dist = 0
+    #     for point in args[0]:
+    #         dist += np.sqrt((x * point[0]) ** 2 + (x * point[1]) ** 2)
+    #     return dist / len(args[0]) - np.sqrt(2)
     def _func1(x, *args):
         dist = 0
         for point in args[0]:
@@ -168,15 +173,21 @@ class Estimation_2D(Geometry):
         return dist / len(args[0]) - np.sqrt(2)
 
     def _isotropic_scaling(self, points):
-        n = len(points)
+        # 齐次
+        points = [self._homogenization(point) for point in points]
         # translate
         t = self._centroid(points)
+        for point in points:
+            point[0] -= t[0]
+            point[1] -= t[1]
+
         # scale
         from scipy.optimize import fsolve
 
         scale = fsolve(self._func1, 1, args=points)[0]
         # create matrix
-        trans_mat = np.array([[scale, 0, -t[0]], [0, scale, -t[1]], [0, 0, 1]])
+        trans_mat = np.array([[scale, 0, t[0][0]], [0, scale, t[1][0]], [0, 0, 1]])
+        # trans_mat = np.array([[scale, 0, 0], [0, scale, 0], [0, 0, 1]])
         return trans_mat
 
     def normalized_DLT(self, points1, points2, homo_factor1=1, homo_factor2=1):
@@ -187,7 +198,12 @@ class Estimation_2D(Geometry):
             self._homogenization(point2) for point2 in points2
         ]
         # 归一化
+        centroid = self._centroid(points1)
         points1_t = [np.dot(T1, point1) for point1 in points1]
+        dist = 0
+        for point1_t in points1_t:
+            dist += np.linalg.norm(point1_t[:2])
+            # dist += np.linalg.norm(point1_t[:2]-centroid)
         points2_t = [np.dot(T1, point1) for point1 in points1]
         dist = 0
         for x in points1_t:
