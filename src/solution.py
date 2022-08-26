@@ -163,6 +163,7 @@ class Estimation_2D(Geometry):
 
     @staticmethod
     def _func1(x, *args):
+        # nonlinear equation to calculate scale of similar transformation
         dist = 0
         points = args[0]
         centroid = args[1]
@@ -172,23 +173,18 @@ class Estimation_2D(Geometry):
             )
         return dist / len(args[0]) - np.sqrt(2)
 
-
     def _isotropic_scaling(self, points):
         # 齐次
         points = [self._homogenization(point) for point in points]
         # translate
         t = self._centroid(points)
-        # for point in points:
-        #     point[0] -= t[0]
-        #     point[1] -= t[1]
 
-        # scale
+        # scale, fsolve to solve the nonlinear equation
         from scipy.optimize import fsolve
 
         scale = fsolve(self._func1, 0, args=(points, t))[0]
         # create matrix
         trans_mat = np.array([[scale, 0, -t[0][0]], [0, scale, -t[1][0]], [0, 0, 1]])
-        # trans_mat = np.array([[scale, 0, 0], [0, scale, 0], [0, 0, 1]])
         return trans_mat
 
     def normalized_DLT(self, points1, points2, homo_factor1=1, homo_factor2=1):
@@ -200,14 +196,10 @@ class Estimation_2D(Geometry):
         ]
         # 归一化
         points1_t = [np.dot(T1, point1) for point1 in points1]
-        # for test
         points2_t = [np.dot(T2, point2) for point2 in points2]
-        dist1, dist2 = 0, 0
-        for (point1_t, point2_t) in (points1_t, points2_t):
-            dist1 += np.linalg.norm(point1_t[:2])
-            dist2 += np.linalg.norm(point2_t[:2])
-        # for point2_t in points2_t:
+        # 计算估计单应
         H_e = self.direct_linear_trans(points1_t, points2_t, homo_factor1, homo_factor2)
+        # 解除归一化
         H = np.dot(np.dot(np.linalg.inv(T2), H_e), T1)
         return H
 
