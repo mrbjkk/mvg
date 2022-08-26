@@ -95,8 +95,9 @@ class Estimation_2D(Geometry):
             ).reshape((3, 1))
 
     def direct_linear_trans(self, x1, x2, homo_factor1=1, homo_factor2=1):
-        x1 = [self._homogenization(x, homo_factor1) for x in x1]
-        x2 = [self._homogenization(x, homo_factor2) for x in x2]
+        if x1[0].shape == 2:
+            x1 = [self._homogenization(x, homo_factor1) for x in x1]
+            x2 = [self._homogenization(x, homo_factor2) for x in x2]
         # x2 = H x1
         mat_list = [
             np.mat(
@@ -161,32 +162,32 @@ class Estimation_2D(Geometry):
         return np.array([x / n, y / n])
 
     @staticmethod
-    # def _func1(x, *args):
-    #     dist = 0
-    #     for point in args[0]:
-    #         dist += np.sqrt((x * point[0]) ** 2 + (x * point[1]) ** 2)
-    #     return dist / len(args[0]) - np.sqrt(2)
     def _func1(x, *args):
         dist = 0
-        for point in args[0]:
-            dist += np.sqrt((x * point[0]) ** 2 + (x * point[1]) ** 2)
+        points = args[0]
+        centroid = args[1]
+        for point in points:
+            dist += np.sqrt(
+                (x * point[0] - centroid[0]) ** 2 + (x * point[1] - centroid[1]) ** 2
+            )
         return dist / len(args[0]) - np.sqrt(2)
+
 
     def _isotropic_scaling(self, points):
         # 齐次
         points = [self._homogenization(point) for point in points]
         # translate
         t = self._centroid(points)
-        for point in points:
-            point[0] -= t[0]
-            point[1] -= t[1]
+        # for point in points:
+        #     point[0] -= t[0]
+        #     point[1] -= t[1]
 
         # scale
         from scipy.optimize import fsolve
 
-        scale = fsolve(self._func1, 1, args=points)[0]
+        scale = fsolve(self._func1, 0, args=(points, t))[0]
         # create matrix
-        trans_mat = np.array([[scale, 0, t[0][0]], [0, scale, t[1][0]], [0, 0, 1]])
+        trans_mat = np.array([[scale, 0, -t[0][0]], [0, scale, -t[1][0]], [0, 0, 1]])
         # trans_mat = np.array([[scale, 0, 0], [0, scale, 0], [0, 0, 1]])
         return trans_mat
 
@@ -198,18 +199,14 @@ class Estimation_2D(Geometry):
             self._homogenization(point2) for point2 in points2
         ]
         # 归一化
-        centroid = self._centroid(points1)
         points1_t = [np.dot(T1, point1) for point1 in points1]
-        dist = 0
-        for point1_t in points1_t:
-            dist += np.linalg.norm(point1_t[:2])
-            # dist += np.linalg.norm(point1_t[:2]-centroid)
-        points2_t = [np.dot(T1, point1) for point1 in points1]
-        dist = 0
-        for x in points1_t:
-            dist += np.linalg.norm(x[:2])
-        dist = dist / len(points1_t)
-        print('hello')
+        # for test
+        points2_t = [np.dot(T2, point2) for point2 in points2]
+        dist1, dist2 = 0, 0
+        for (point1_t, point2_t) in (points1_t, points2_t):
+            dist1 += np.linalg.norm(point1_t[:2])
+            dist2 += np.linalg.norm(point2_t[:2])
+        # for point2_t in points2_t:
         H_e = self.direct_linear_trans(points1_t, points2_t, homo_factor1, homo_factor2)
         H = np.dot(np.dot(np.linalg.inv(T2), H_e), T1)
         return H
