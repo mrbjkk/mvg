@@ -203,6 +203,8 @@ class Estimation_2D(Geometry):
         H = np.dot(np.dot(np.linalg.inv(T2), H_e), T1)
         return H
 
+    # def RANSAC(self, set_, num_sample, thres):
+
     class Cost_Function(Geometry):
         def _homogenization(self, x, homo_factor=1):
             if homo_factor == 0:
@@ -246,3 +248,7 @@ class Estimation_2D(Geometry):
             dist1 = np.linalg.norm(x1, x1_e)
             dist2 = np.linalg.norm(x2, x2_e)
             return dist1 + dist2
+        
+        def Sampson_error(self, x1, x1_e, x2, x2_e):
+            X_r = np.c_[x1, x2].transpose()
+            X_e = np.c_[x1_e, x2_e].transpose()
