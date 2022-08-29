@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
 
-# import utils
+from scipy import optimize
+
+import utils
 
 
 class Geometry:
@@ -149,18 +151,6 @@ class Estimation_2D(Geometry):
 
         return v[:, -1].reshape(3, 3)
 
-    def _centroid(self, points):
-        """
-        x -- a list of points
-        return the centroid of a set of 2D points
-        """
-        n = len(points)
-        x, y = 0, 0
-        for point in points:
-            x += point[0]
-            y += point[1]
-        return np.array([x / n, y / n])
-
     @staticmethod
     def _func1(x, *args):
         # nonlinear equation to calculate scale of similar transformation
@@ -177,7 +167,7 @@ class Estimation_2D(Geometry):
         # 齐次
         points = [self._homogenization(point) for point in points]
         # translate
-        t = self._centroid(points)
+        t = utils.centroid(points)
 
         # scale, fsolve to solve the nonlinear equation
         from scipy.optimize import fsolve
@@ -203,7 +193,35 @@ class Estimation_2D(Geometry):
         H = np.dot(np.dot(np.linalg.inv(T2), H_e), T1)
         return H
 
-    # def RANSAC(self, set_, num_sample, thres):
+    def RANSAC_2D(self, set_, num_sampling, dist_thres=2, size_thres=5, sample_thres=2):
+        ret_list = []
+        from random import sample
+
+        for i in range(sample_thres):
+            inner_point = []
+            # 从数据集set中随机选择num_sampling个数据点组成一个样本
+            sampler = sample(set_, num_sampling)
+            # x = [sampler[i][0] for i in range(len(sampler))]
+            # y = [sampler[i][1] for i in range(len(sampler))]
+            [x, y] = [
+                [sampler[i][0] for i in range(len(sampler))],
+                [sampler[j][1] for j in range(len(sampler))],
+            ]
+            # 样本模型，若num_sampling为2，则表示两点确定的一条直线
+            # model = utils.linequation_2D(sampler[0], sampler[1])
+            model = optimize.curve_fit(utils.line_func, x, y)[0]
+            for s in set_:
+                for cmp_ in sampler:
+                    if not (s == cmp_).all():
+                        # 遍历数据集，计算和sampler不同的数据点距离模型(直线)的距离
+                        dist = utils.distbetweenpoint_line(s, model)
+                        if dist < dist_thres:
+                            # 距离小于阈值dist_thres的点，构成一致集
+                            inner_point.append(s)
+
+            if len(inner_point) > size_thres:
+
+                print("hello")
 
     class Cost_Function(Geometry):
         def _homogenization(self, x, homo_factor=1):
@@ -248,7 +266,7 @@ class Estimation_2D(Geometry):
             dist1 = np.linalg.norm(x1, x1_e)
             dist2 = np.linalg.norm(x2, x2_e)
             return dist1 + dist2
-        
-        def Sampson_error(self, x1, x1_e, x2, x2_e):
+
+        def Sampson_error(self, x1: np.ndarray, x1_e, x2: np.ndarray, x2_e):
             X_r = np.c_[x1, x2].transpose()
             X_e = np.c_[x1_e, x2_e].transpose()
