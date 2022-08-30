@@ -220,6 +220,7 @@ class Estimation_2D(Geometry):
                             inner_point.append(s)
 
             if len(inner_point) > size_thres:
+                model_new = optimize.curve_fit(utils.line_func, )
 
                 print("hello")
 
