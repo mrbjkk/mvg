@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+from random import sample
 from scipy import optimize
 
 import utils
@@ -193,10 +194,22 @@ class Estimation_2D(Geometry):
         H = np.dot(np.dot(np.linalg.inv(T2), H_e), T1)
         return H
 
-    def RANSAC_2D(self, set_, num_sampling, dist_thres=2, size_thres=5, sample_thres=2):
-        ret_list = []
-        from random import sample
+    def RANSAC_2D(self, set_, num_sampling, dist_thres=2, size_thres=5, num_outlier=2, p = 0.99):
+        """RANSAR_2D
 
+        Args:
+            set_ (list): _description_
+            num_sampling (_type_): _description_
+            dist_thres (int, optional): _description_. Defaults to 2.
+            size_thres (int, optional): _description_. Defaults to 5.
+            num_outlier (int, optional): _description_. Defaults to 2.
+            p (float, optional): _description_. Defaults to 0.99.
+        """
+        
+        epsilon = num_outlier / len(set_)
+        sample_thres = np.log(1-p) / np.log(1-np.power((1-p), ))
+
+        ret_list = []
         for i in range(sample_thres):
             inner_point = []
             # 从数据集set中随机选择num_sampling个数据点组成一个样本
@@ -207,9 +220,9 @@ class Estimation_2D(Geometry):
             for s in set_:
                 # 设置标记
                 flag = np.zeros(len(sampler))
-                for i in range(len(sampler)):
+                for j in range(len(sampler)):
                     if not (s == sampler[i]).all():
-                        flag[i] = 1
+                        flag[j] = 1
                 if flag.all():
                     dist = utils.dist_bt_point_line(s, model)
                     if dist < dist_thres:
@@ -222,7 +235,7 @@ class Estimation_2D(Geometry):
                 new_model = utils.curve_fit_2D(inner_point)
                 ret_list.append(inner_point)
 
-                print("hello")
+        print("hello")
 
     class Cost_Function(Geometry):
         def _homogenization(self, x, homo_factor=1):
