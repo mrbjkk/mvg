@@ -207,7 +207,7 @@ class Estimation_2D(Geometry):
         """
         
         epsilon = num_outlier / len(set_)
-        sample_thres = np.log(1-p) / np.log(1-np.power((1-p), ))
+        sample_thres = np.log(1-p) / np.log(1-np.power((1-epsilon), num_sampling))
 
         ret_list = []
         for i in range(sample_thres):
