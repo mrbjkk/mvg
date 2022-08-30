@@ -27,28 +27,30 @@ def linequation_2D(point1, point2):
     c = sign * (point2[1] * point2[0] - point1[0] * point2[1])
     return [a, b, c]
 
-def line_func(x, A, B):
+def line_func_2D(x, A, B):
     return A * x + B
 
-# def linequation_2D(points):
-#     sign = 1
-#     a = point2[1] - point1[1]
-#     if a < 0:
-#         sign = -1
-#         a = sign * a
-#     b = sign * (point1[0] - point2[0])
-#     c = sign * (point2[1] * point2[0] - point1[0] * point2[1])
-#     return [a, b, c]
+def linequation_2D(point1, point2):
+    sign = 1
+    a = point2[1] - point1[1]
+    if a < 0:
+        sign = -1
+        a = sign * a
+    b = sign * (point1[0] - point2[0])
+    c = sign * (point2[1] * point2[0] - point1[0] * point2[1])
+    return [a, b, c]
 
-def curve_fit_2D(points, func=line_func):
+def curve_fit_2D(sample_points, func=line_func_2D):
     [x, y] = [
-        [points[i][0] for i in range(len(points))],
-        [points[j][1] for j in range(len(points))],
+        [sample_points[i][0] for i in range(len(sample_points))],
+        [sample_points[j][1] for j in range(len(sample_points))],
     ]
-    model = optimize.curve_fit(func, x, y)[0]
-    return model
+    # 得到截距式
+    model = optimize.curve_fit(func, x, y)[0].tolist()
+    # 转为参数式
+    return [model[0], -1, model[1]]
 
-def distbetweenpoint_line(point, line):
+def dist_bt_point_line(point, line):
     dist = np.abs(line[0] * point[0] + line[1] * point[1] + line[2]) / np.sqrt(
         line[0] ** 2 + line[1] ** 2
     )

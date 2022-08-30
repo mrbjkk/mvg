@@ -201,26 +201,26 @@ class Estimation_2D(Geometry):
             inner_point = []
             # 从数据集set中随机选择num_sampling个数据点组成一个样本
             sampler = sample(set_, num_sampling)
-            # x = [sampler[i][0] for i in range(len(sampler))]
-            # y = [sampler[i][1] for i in range(len(sampler))]
-            [x, y] = [
-                [sampler[i][0] for i in range(len(sampler))],
-                [sampler[j][1] for j in range(len(sampler))],
-            ]
             # 样本模型，若num_sampling为2，则表示两点确定的一条直线
-            # model = utils.linequation_2D(sampler[0], sampler[1])
-            model = optimize.curve_fit(utils.line_func, x, y)[0]
+            model = utils.curve_fit_2D(sampler)
+            # 遍历数据集，计算和sampler不同的数据点距离模型(直线)的距离
             for s in set_:
-                for cmp_ in sampler:
-                    if not (s == cmp_).all():
-                        # 遍历数据集，计算和sampler不同的数据点距离模型(直线)的距离
-                        dist = utils.distbetweenpoint_line(s, model)
-                        if dist < dist_thres:
-                            # 距离小于阈值dist_thres的点，构成一致集
-                            inner_point.append(s)
+                # 设置标记
+                flag = np.zeros(len(sampler))
+                for i in range(len(sampler)):
+                    if not (s == sampler[i]).all():
+                        flag[i] = 1
+                if flag.all():
+                    dist = utils.dist_bt_point_line(s, model)
+                    if dist < dist_thres:
+                        # 距离小于阈值dist_thres的点，构成一致集
+                        inner_point.append(s)
 
             if len(inner_point) > size_thres:
-                model_new = optimize.curve_fit(utils.line_func, )
+                for samp in sampler:
+                    inner_point.append(samp)
+                new_model = utils.curve_fit_2D(inner_point)
+                ret_list.append(inner_point)
 
                 print("hello")
 
