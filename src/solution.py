@@ -194,23 +194,27 @@ class Estimation_2D(Geometry):
         H = np.dot(np.dot(np.linalg.inv(T2), H_e), T1)
         return H
 
-    def RANSAC_2D(self, set_, num_sampling, dist_thres=2, size_thres=5, num_outlier=2, p = 0.99):
+    def RANSAC_2D(
+        self, set_, num_sampling=2, dist_thres=2, size_thres=5, num_outlier=2, p=0.99
+    ):
         """RANSAR_2D
 
         Args:
-            set_ (list): _description_
-            num_sampling (_type_): _description_
-            dist_thres (int, optional): _description_. Defaults to 2.
+            set_ (list): a set of points to be modeled
+            num_sampling (int): the number of sample point each time, set to 2 for 2D RANSAC
+            dist_thres (int, optional): The distance between other points and the initial model. Defaults to 2.
             size_thres (int, optional): _description_. Defaults to 5.
             num_outlier (int, optional): _description_. Defaults to 2.
             p (float, optional): _description_. Defaults to 0.99.
         """
-        
+
         epsilon = num_outlier / len(set_)
-        sample_thres = np.log(1-p) / np.log(1-np.power((1-epsilon), num_sampling))
+        sample_thres = np.log(1 - p) // np.log(
+            1 - np.power((1 - epsilon), num_sampling)
+        )
 
         ret_list = []
-        for i in range(sample_thres):
+        for i in range(int(sample_thres)):
             inner_point = []
             # 从数据集set中随机选择num_sampling个数据点组成一个样本
             sampler = sample(set_, num_sampling)
@@ -221,10 +225,10 @@ class Estimation_2D(Geometry):
                 # 设置标记
                 flag = np.zeros(len(sampler))
                 for j in range(len(sampler)):
-                    if not (s == sampler[i]).all():
+                    if not (s == sampler[j]).all():
                         flag[j] = 1
                 if flag.all():
-                    dist = utils.dist_bt_point_line(s, model)
+                    dist = utils.dist_btw_point_line(s, model)
                     if dist < dist_thres:
                         # 距离小于阈值dist_thres的点，构成一致集
                         inner_point.append(s)

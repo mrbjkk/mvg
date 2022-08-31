@@ -28,6 +28,7 @@ def linequation_2D(point1, point2):
     return [a, b, c]
 
 def line_func_2D(x, A, B):
+    # 截距式 
     return A * x + B
 
 def linequation_2D(point1, point2):
@@ -50,7 +51,7 @@ def curve_fit_2D(sample_points, func=line_func_2D):
     # 转为参数式
     return [model[0], -1, model[1]]
 
-def dist_bt_point_line(point, line):
+def dist_btw_point_line(point, line):
     dist = np.abs(line[0] * point[0] + line[1] * point[1] + line[2]) / np.sqrt(
         line[0] ** 2 + line[1] ** 2
     )
