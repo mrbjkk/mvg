@@ -1,3 +1,4 @@
+from re import M
 import cv2
 import numpy as np
 
@@ -5,6 +6,8 @@ from random import sample
 from scipy import optimize
 
 import utils
+
+MAX_NUM = 1000000
 
 
 class Geometry:
@@ -194,9 +197,32 @@ class Estimation_2D(Geometry):
         H = np.dot(np.dot(np.linalg.inv(T2), H_e), T1)
         return H
 
-    def RANSAC_2D(
-        self, set_, num_sampling=2, dist_thres=2, size_thres=5, num_outlier=2, p=0.99
-    ):
+    def _adaptive_num_sampling(self, set_, dist_thres=2, num_sampling=2):
+        sample_thres = MAX_NUM
+        p = 0.99
+        sample_count = 0
+        while sample_thres > sample_count:
+            num_inner_point = 0
+            sampler = sample(set_, num_sampling)
+            model = utils.curve_fit_2D(sampler)
+            for s in set_:
+                flag = np.zeros(len(sampler))
+                for j in range(len(sampler)):
+                    if not (s == sampler[j]).all():
+                        flag[j] = 1
+                if flag.all():
+                    dist = utils.dist_btw_point_line(s, model)
+                    if dist < dist_thres:
+                        num_inner_point += 1
+            epsilon = 1 - num_inner_point / len(set_)
+            sample_thres = np.log(1 - p) // np.log(
+                1 - np.power((1 - epsilon), num_sampling)
+            )
+            sample_count += 1
+
+        return sample_thres
+
+    def RANSAC_2D(self, set_, num_sampling=2, dist_thres=2, size_thres=5):
         """RANSAR_2D
 
         Args:
@@ -208,9 +234,8 @@ class Estimation_2D(Geometry):
             p (float, optional): _description_. Defaults to 0.99.
         """
 
-        epsilon = num_outlier / len(set_)
-        sample_thres = np.log(1 - p) // np.log(
-            1 - np.power((1 - epsilon), num_sampling)
+        sample_thres = self._adaptive_num_sampling(
+            set_, dist_thres=dist_thres, num_sampling=num_sampling
         )
 
         ret_list = []
