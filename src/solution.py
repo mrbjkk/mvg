@@ -1,4 +1,4 @@
-from re import M
+import os
 import cv2
 import numpy as np
 
@@ -200,6 +200,7 @@ class Estimation_2D(Geometry):
     def _adaptive_num_sampling(self, set_, dist_thres=2, num_sampling=2):
         sample_thres = MAX_NUM
         p = 0.99
+        num_set = len(set_)
         sample_count = 0
         while sample_thres > sample_count:
             num_inner_point = 0
@@ -214,15 +215,16 @@ class Estimation_2D(Geometry):
                     dist = utils.dist_btw_point_line(s, model)
                     if dist < dist_thres:
                         num_inner_point += 1
-            epsilon = 1 - num_inner_point / len(set_)
+            epsilon = 1 - num_inner_point / num_set
             sample_thres = np.log(1 - p) // np.log(
                 1 - np.power((1 - epsilon), num_sampling)
             )
             sample_count += 1
 
-        return sample_thres
+        size_thres = (1-epsilon) * num_set
+        return sample_thres, size_thres
 
-    def RANSAC_2D(self, set_, num_sampling=2, dist_thres=2, size_thres=5):
+    def RANSAC_2D(self, set_, num_sampling=2, dist_thres=2):
         """RANSAR_2D
 
         Args:
@@ -234,15 +236,16 @@ class Estimation_2D(Geometry):
             p (float, optional): _description_. Defaults to 0.99.
         """
 
-        sample_thres = self._adaptive_num_sampling(
+        sample_thres, size_thres = self._adaptive_num_sampling(
             set_, dist_thres=dist_thres, num_sampling=num_sampling
         )
 
         ret_list = []
         for i in range(int(sample_thres)):
             inner_point = []
-            # 从数据集set中随机选择num_sampling个数据点组成一个样本
+            # 从数据集set中随机选择num_sampling个数据点组成一个样本，并加入内点集
             sampler = sample(set_, num_sampling)
+            inner_point += sampler
             # 样本模型，若num_sampling为2，则表示两点确定的一条直线
             model = utils.curve_fit_2D(sampler)
             # 遍历数据集，计算和sampler不同的数据点距离模型(直线)的距离
@@ -259,12 +262,27 @@ class Estimation_2D(Geometry):
                         inner_point.append(s)
 
             if len(inner_point) > size_thres:
-                for samp in sampler:
-                    inner_point.append(samp)
                 new_model = utils.curve_fit_2D(inner_point)
                 ret_list.append(inner_point)
 
-        print("hello")
+        ret_point = max(ret_list, key=len)
+        # print("hello")
+        return new_model, ret_point
+
+    def estimate_homography(self, image_path):
+        # from utils import ImageProc
+        # image_pair = ImageProc.image_read(self, image_path)
+        harris_detector = []
+        for image in os.listdir(image_path):
+            img = cv2.imread(image_path + '/' + image)
+            rows, cols, _channels = map(int, img.shape)
+            # img = cv2.pyrDown(img, dstsize=(cols//4, rows//4))
+            img = cv2.resize(img, dsize=(cols//4, rows//4))
+            gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            dst = cv2.cornerHarris(gray_img, 2, 3, 0.04)
+            img[dst>0.01*dst.max()] = [0, 0, 255]
+            harris_detector.append(dst)
+        print('hello')
 
     class Cost_Function(Geometry):
         def _homogenization(self, x, homo_factor=1):

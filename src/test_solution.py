@@ -23,5 +23,9 @@ if __name__ == "__main__":
     ]
     pt_2d = solution.Estimation_2D()
     # mat = pt_2d.normalized_DLT(x1, x2)
-    ret = pt_2d.RANSAC_2D(ransac_set, 2)
+    # ret = pt_2d.RANSAC_2D(ransac_set, 2)
+
+    image_path = 'data/input'
+    pt_2d.estimate_homography(image_path) 
+
     print("hello")
