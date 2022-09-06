@@ -221,7 +221,7 @@ class Estimation_2D(Geometry):
             )
             sample_count += 1
 
-        size_thres = (1-epsilon) * num_set
+        size_thres = (1 - epsilon) * num_set
         return sample_thres, size_thres
 
     def RANSAC_2D(self, set_, num_sampling=2, dist_thres=2):
@@ -269,11 +269,16 @@ class Estimation_2D(Geometry):
         # print("hello")
         return new_model, ret_point
 
-    def estimate_homography(self, image_path):
-        for image in os.listdir(image_path):
-            img = cv2.imread(image_path + '/' + image)
-            corner_coords = utils.ImageProc.harris_detector(self, img)
-        print('hello')
+    def estimate_homography_2D(self, target_path, reference_path):
+        target_img = cv2.imread(target_path)
+        reference_img = cv2.imread(reference_path)
+        target_rows, target_cols, _ = target_img.shape
+        target_corner = utils.ImageProc.harris_detector(self, target_img, resize=4)
+        reference_corner = utils.ImageProc.harris_detector(self, reference_img, resize=4)
+        for i, coord in enumerate(target_corner):
+            window_size = 10
+            while(window_size or )
+            print('hello')
 
     class Cost_Function(Geometry):
         def _homogenization(self, x, homo_factor=1):

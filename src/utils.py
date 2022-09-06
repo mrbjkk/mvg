@@ -17,15 +17,16 @@ class ImageProc:
         if resize:
             rows, cols, _channels = map(int, img.shape)
             # img = cv2.pyrDown(img, dstsize=(cols//resize, rows//resize))
-            img = cv2.resize(img, dsize=(cols//resize, rows//resize))
+            img = cv2.resize(img, dsize=(cols // resize, rows // resize))
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         dst = cv2.cornerHarris(gray_img, 2, 3, 0.04)
-        corner_tuple = np.where(dst>filt_thres*dst.max())
+        corner_tuple = np.where(dst > filt_thres * dst.max())
         corner_coords = []
         for i in range(len(corner_tuple[0])):
-            corner_coords.append(corner_tuple[i])
+            corner_coords.append([corner_tuple[0][i], corner_tuple[1][i]])
         return corner_coords
-        
+
+
 def centroid(points):
     """
     x -- a list of points

@@ -26,6 +26,6 @@ if __name__ == "__main__":
     # ret = pt_2d.RANSAC_2D(ransac_set, 2)
 
     image_path = 'data/input'
-    pt_2d.estimate_homography(image_path) 
+    pt_2d.estimate_homography_2D('data/input/stereo_pair1.jpg', 'data/input/stereo_pair2.jpg') 
 
     print("hello")
