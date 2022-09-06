@@ -270,18 +270,9 @@ class Estimation_2D(Geometry):
         return new_model, ret_point
 
     def estimate_homography(self, image_path):
-        # from utils import ImageProc
-        # image_pair = ImageProc.image_read(self, image_path)
-        harris_detector = []
         for image in os.listdir(image_path):
             img = cv2.imread(image_path + '/' + image)
-            rows, cols, _channels = map(int, img.shape)
-            # img = cv2.pyrDown(img, dstsize=(cols//4, rows//4))
-            img = cv2.resize(img, dsize=(cols//4, rows//4))
-            gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            dst = cv2.cornerHarris(gray_img, 2, 3, 0.04)
-            img[dst>0.01*dst.max()] = [0, 0, 255]
-            harris_detector.append(dst)
+            corner_coords = utils.ImageProc.harris_detector(self, img)
         print('hello')
 
     class Cost_Function(Geometry):
