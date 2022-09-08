@@ -1,3 +1,4 @@
+from itertools import product
 import os
 import cv2
 import numpy as np
@@ -266,18 +267,33 @@ class Estimation_2D(Geometry):
                 ret_list.append(inner_point)
 
         ret_point = max(ret_list, key=len)
-        # print("hello")
         return new_model, ret_point
 
-    def estimate_homography_2D(self, target_path, reference_path):
+    def estimate_homography_2D(self, target_path, reference_path, target_size=10, search_size=100):
         target_img = cv2.imread(target_path)
         reference_img = cv2.imread(reference_path)
-        target_rows, target_cols, _ = target_img.shape
-        target_corner = utils.ImageProc.harris_detector(self, target_img, resize=4)
-        reference_corner = utils.ImageProc.harris_detector(self, reference_img, resize=4)
-        for i, coord in enumerate(target_corner):
-            window_size = 10
-            while(window_size or )
+        target_img = cv2.cvtColor(target_img, cv2.COLOR_BGR2GRAY)
+        reference_img = cv2.cvtColor(reference_img, cv2.COLOR_BGR2GRAY)
+        target_rows, target_cols = target_img.shape
+        reference_rows, reference_cols = reference_img.shape
+        target_corner = utils.ImageProc.harris_detector(self, target_img)
+        reference_corner = utils.ImageProc.harris_detector(self, reference_img)
+        for coord in target_corner:
+            ssd = 0
+            # inbound, outbound = 0, 0
+            for k in range(-search_size // 2, search_size // 2):
+            for i, j in product(
+                range(-target_size // 2, target_size // 2),
+                range(-target_size // 2, target_size // 2),
+            ):
+                x, y = coord[0] + i, coord[1] + j
+                if x < 0 or y < 0:
+                    # outbound += 1
+                    continue
+                else:
+                    diff = int(reference_img[x, y]) - int(target_img[x, y])
+                    ssd += diff**2
+                    # inbound += 1
             print('hello')
 
     class Cost_Function(Geometry):

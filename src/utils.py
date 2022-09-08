@@ -13,13 +13,15 @@ class ImageProc:
             image_list.append(img)
         return image_list
 
-    def harris_detector(self, img, resize=0, filt_thres=0.01):
+    def harris_detector(self, img, gray=False, resize=0, filt_thres=0.01):
         if resize:
             rows, cols, _channels = map(int, img.shape)
             # img = cv2.pyrDown(img, dstsize=(cols//resize, rows//resize))
             img = cv2.resize(img, dsize=(cols // resize, rows // resize))
-        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        dst = cv2.cornerHarris(gray_img, 2, 3, 0.04)
+
+        if gray:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        dst = cv2.cornerHarris(img, 2, 3, 0.04)
         corner_tuple = np.where(dst > filt_thres * dst.max())
         corner_coords = []
         for i in range(len(corner_tuple[0])):
