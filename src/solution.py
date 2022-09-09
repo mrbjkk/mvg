@@ -269,32 +269,98 @@ class Estimation_2D(Geometry):
         ret_point = max(ret_list, key=len)
         return new_model, ret_point
 
-    def estimate_homography_2D(self, target_path, reference_path, target_size=10, search_size=100):
-        target_img = cv2.imread(target_path)
-        reference_img = cv2.imread(reference_path)
+    def ssd_matching(
+        self,
+        target_img,
+        reference_img,
+        corner_detector='harris',
+        resize=0,
+        block_size=(10, 10),
+        search_block_size=(10, 10),
+    ):
+        if resize:
+            target_img = cv2.resize(target_img, None, fx=resize, fy=resize)
+            reference_img = cv2.resize(reference_img, None, fx=resize, fy=resize)
         target_img = cv2.cvtColor(target_img, cv2.COLOR_BGR2GRAY)
         reference_img = cv2.cvtColor(reference_img, cv2.COLOR_BGR2GRAY)
         target_rows, target_cols = target_img.shape
         reference_rows, reference_cols = reference_img.shape
-        target_corner = utils.ImageProc.harris_detector(self, target_img)
-        reference_corner = utils.ImageProc.harris_detector(self, reference_img)
+        if corner_detector == 'harris':
+            target_corner = utils.ImageProc.harris_detector(self, target_img)
+            reference_corner = utils.ImageProc.harris_detector(self, reference_img)
+        best_matching_target, best_matching_reference = [], []
         for coord in target_corner:
-            ssd = 0
-            # inbound, outbound = 0, 0
-            for k in range(-search_size // 2, search_size // 2):
+            ssd = MAX_NUM
+            # for k, j in range(-search_size // 2, search_size // 2):
+            target_block = target_img[
+                max(0, coord[0] - block_size[0] // 2) : min(
+                    coord[0] + block_size[0] // 2, target_rows
+                ),
+                max(0, coord[1] - block_size[1] // 2) : min(
+                    coord[1] + block_size[1] // 2, target_cols
+                ),
+            ]
             for i, j in product(
-                range(-target_size // 2, target_size // 2),
-                range(-target_size // 2, target_size // 2),
+                range(-search_block_size[0], search_block_size[0]),
+                range(-search_block_size[1], search_block_size[1]),
             ):
                 x, y = coord[0] + i, coord[1] + j
-                if x < 0 or y < 0:
-                    # outbound += 1
-                    continue
-                else:
-                    diff = int(reference_img[x, y]) - int(target_img[x, y])
-                    ssd += diff**2
-                    # inbound += 1
-            print('hello')
+                reference_block = reference_img[
+                    max(0, x - block_size[0] // 2) : min(
+                        max(0, x + block_size[0] // 2), target_rows
+                    ),
+                    max(0, y - block_size[1] // 2) : min(
+                        max(0, y + block_size[1] // 2), target_cols
+                    ),
+                ]
+                if reference_block.shape == target_block.shape:
+                    temp_ssd = np.sum((target_block-reference_block)**2)
+                    if temp_ssd < ssd:
+                        ssd = temp_ssd
+                        matching = (coord, [x, y])
+
+            best_matching_target.append(matching)        
+
+        return best_matching_target
+        print('hello')
+        # for coord in reference_corner:
+        #     ssd = 0
+        #     # for k, j in range(-search_size // 2, search_size // 2):
+        #     reference_block = reference_img[
+        #         max(0, coord[0] - block_size[0] // 2) : min(
+        #             coord[0] + block_size[0] // 2, target_rows
+        #         ),
+        #         max(0, coord[1] - block_size[1] // 2) : min(
+        #             coord[1] + block_size[1] // 2, target_cols
+        #         ),
+        #     ]
+        #     for i, j in product(
+        #         range(-search_block_size[0], search_block_size[0]),
+        #         range(-search_block_size[1], search_block_size[1]),
+        #     ):
+        #         ssd = MAX_NUM
+        #         x, y = coord[0] + i, coord[1] + j
+        #         reference_block = reference_img[
+        #             max(0, x - block_size[0] // 2) : min(
+        #                 max(0, x + block_size[0] // 2), target_rows
+        #             ),
+        #             max(0, y - block_size[1] // 2) : min(
+        #                 max(0, y + block_size[1] // 2), target_cols
+        #             ),
+        #         ]
+        #         if reference_block.shape == target_block.shape:
+        #             temp_ssd = np.sum((target_block-reference_block)**2)
+        #             if temp_ssd < ssd:
+        #                 ssd = temp_ssd
+        #                 matching = (coord, [x, y])
+
+        #     best_matching_target.append(matching)        
+        # return best_matching_target
+
+    def estimate_homography_2D(self, target_path, reference_path):
+        target_img = cv2.imread(target_path)
+        reference_img = cv2.imread(reference_path)
+        putative_crsp = self.ssd_matching(target_img, reference_img)
 
     class Cost_Function(Geometry):
         def _homogenization(self, x, homo_factor=1):
