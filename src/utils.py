@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 
 from scipy import optimize
+from tqdm import tqdm
 
 
 class ImageProc:
@@ -13,7 +14,9 @@ class ImageProc:
             image_list.append(img)
         return image_list
 
-    def harris_detector(self, img, gray=False, resize=0, filt_thres=0.01):
+    def harris_detector(
+        self, img, gray=False, draw_path=None, resize=0, filt_thres=0.01
+    ):
         if resize:
             rows, cols, _channels = map(int, img.shape)
             # img = cv2.pyrDown(img, dstsize=(cols//resize, rows//resize))
@@ -22,10 +25,13 @@ class ImageProc:
         if gray:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         dst = cv2.cornerHarris(img, 2, 3, 0.04)
+        if draw_path:
+            img[dst > filt_thres * dst.max()] = [0, 0, 255]
+            cv2.imwrite(draw_path + 'harris_detector.jpg', img)
         corner_tuple = np.where(dst > filt_thres * dst.max())
         corner_coords = []
         for i in range(len(corner_tuple[0])):
-            corner_coords.append([corner_tuple[0][i], corner_tuple[1][i]])
+            corner_coords.append((corner_tuple[0][i], corner_tuple[1][i]))
         return corner_coords
 
 
@@ -85,3 +91,17 @@ def dist_btw_point_line(point, line):
         line[0] ** 2 + line[1] ** 2
     )
     return dist
+
+
+def show_matching(target_img, reference_img, point_pairs):
+    # 拼接
+    splicing_img = cv2.hconcat([target_img, reference_img])
+    for point_pair in point_pairs:
+        cv2.line(
+            splicing_img,
+            tuple(point_pair[0]),
+            tuple([point_pair[1][0] + target_img.shape[0], point_pair[1][1]]),
+            color=(0, 255, 0),
+        )
+    cv2.imwrite('data/output/matching.jpg', splicing_img)
+    print('hello')
