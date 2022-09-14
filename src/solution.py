@@ -1,11 +1,10 @@
-from itertools import product
-import os
 import cv2
 import numpy as np
+import operator
 
 from random import sample
-from scipy import optimize
 
+from itertools import product
 from tqdm import tqdm
 
 import utils
@@ -277,7 +276,7 @@ class Estimation_2D(Geometry):
         reference_img,
         target_corner,
         block_size=(10, 10),
-        search_block_size=(80, 80),
+        search_block_size=(10, 10),
     ):
         target_rows, target_cols = target_img.shape
         best_matching = []
@@ -290,7 +289,7 @@ class Estimation_2D(Geometry):
                 max(0, coord[1] - block_size[1] // 2) : min(
                     coord[1] + block_size[1] // 2, target_cols
                 ),
-            ]
+            ].astype(np.int)
             for i, j in product(
                 range(-search_block_size[0], search_block_size[0]),
                 range(-search_block_size[1], search_block_size[1]),
@@ -303,14 +302,23 @@ class Estimation_2D(Geometry):
                     max(0, y - block_size[1] // 2) : min(
                         max(0, y + block_size[1] // 2), target_cols
                     ),
-                ]
+                ].astype(np.int)
                 if reference_block.shape == target_block.shape:
                     temp_ssd = np.sum((target_block - reference_block) ** 2)
                     if temp_ssd < ssd:
                         ssd = temp_ssd
-                        matching = (coord, (x, y))
+                        matching = (coord, (x, y), ssd)
 
             best_matching.append(matching)
+        my_dict = {}
+        var = 0
+        for index, target_coord in enumerate(best_matching):
+            if target_coord[0] not in my_dict:
+                my_dict[target_coord[0]] = target_coord[2] 
+            elif target_coord[2] < my_dict[target_coord[0]]:
+                var += 1
+                print(var)
+                my_dict[target_coord[0]] = target_coord[2]
         return best_matching
 
     def ssd_matching(
@@ -343,7 +351,7 @@ class Estimation_2D(Geometry):
             reference_corner,
         )
 
-        utils.show_matching(target_img, reference_img, best_matching_target)
+        # utils.show_matching(target_img, reference_img, best_matching_target)
         return best_matching_target
 
     def estimate_homography_2D(self, target_path, reference_path):
