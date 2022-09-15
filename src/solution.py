@@ -278,6 +278,7 @@ class Estimation_2D(Geometry):
         block_size=(10, 10),
         search_block_size=(10, 10),
     ):
+        assert target_img.shape == (800, 600)
         target_rows, target_cols = target_img.shape
         best_matching = []
         for coord in tqdm(target_corner):
@@ -310,15 +311,23 @@ class Estimation_2D(Geometry):
                         matching = (coord, (x, y), ssd)
 
             best_matching.append(matching)
-        my_dict = {}
-        var = 0
-        for index, target_coord in enumerate(best_matching):
-            if target_coord[0] not in my_dict:
-                my_dict[target_coord[0]] = target_coord[2] 
-            elif target_coord[2] < my_dict[target_coord[0]]:
-                var += 1
-                print(var)
-                my_dict[target_coord[0]] = target_coord[2]
+        # new_list = []
+        # for match in best_matching:
+        #     if match not in new_list:
+        #         new_list.append(match)
+
+        
+        # print('hello')
+
+        # my_dict = {}
+        # var = 0
+        # for index, target_coord in enumerate(best_matching):
+        #     if target_coord[0] not in my_dict:
+        #         my_dict[target_coord[0]] = target_coord[2] 
+        #     elif target_coord[2] < my_dict[target_coord[0]]:
+        #         var += 1
+        #         print(var)
+        #         my_dict[target_coord[0]] = target_coord[2]
         return best_matching
 
     def ssd_matching(
@@ -357,7 +366,7 @@ class Estimation_2D(Geometry):
     def estimate_homography_2D(self, target_path, reference_path):
         target_img = cv2.imread(target_path)
         reference_img = cv2.imread(reference_path)
-        putative_crsp = self.ssd_matching(target_img, reference_img)
+        putative_corresponding = self.ssd_matching(target_img, reference_img)
 
     class Cost_Function(Geometry):
         def _homogenization(self, x, homo_factor=1):
