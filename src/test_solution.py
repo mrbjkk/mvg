@@ -3,6 +3,7 @@ import numpy as np
 
 # from src.solution import *
 import solution
+from singleview_Geometry import Camera_Model
 
 if __name__ == "__main__":
 
@@ -21,11 +22,18 @@ if __name__ == "__main__":
         np.array([3, 2]),
         np.array([4, 3]),
     ]
-    pt_2d = solution.Estimation_2D()
+    # pt_2d = solution.Estimation_2D()
     # mat = pt_2d.normalized_DLT(x1, x2)
     # ret = pt_2d.RANSAC_2D(ransac_set, 2)
 
-    image_path = 'data/input'
-    pt_2d.estimate_homography_2D('data/input/stereo_pair1.jpg', 'data/input/stereo_pair2.jpg') 
+    # image_path = "data/input"
+    # pt_2d.estimate_homography_2D(
+    #     "data/input/stereo_pair1.jpg", "data/input/stereo_pair2.jpg"
+    # )
+
+    camera_model = Camera_Model(
+        0.5, np.array([0.5, 0.5]), np.array([1, 2, 3]), np.array([0.1, 0.2, 0.3])
+    )
+    camera_mat = camera_model.camera_mat()
 
     print("hello")
