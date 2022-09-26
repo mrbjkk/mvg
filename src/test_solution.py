@@ -35,5 +35,6 @@ if __name__ == "__main__":
         0.5, np.array([0.5, 0.5]), np.array([1, 2, 3]), np.array([0.1, 0.2, 0.3])
     )
     camera_mat = camera_model.camera_mat()
+    ret = camera_model.depth(world_point=np.array([0.5,0.5,0.5]))
 
     print("hello")

@@ -66,9 +66,27 @@ class Camera_Model(Geometry):
         rotation_mat = np.dot(np.dot(rot_mat_roll, rot_mat_pitch), rot_mat_yaw)
         return rotation_mat
 
+    def world2camera(self):
+        camera_center = self.camera_center_world_coord
+        R = self._rotation_mat()
+        upper = np.hstack((R, -1 * np.dot(R,camera_center)))
+        lower = np.hstack((self.zeroVector(3), 1))
+        mat = np.vstack((upper, lower))
+        return mat
+
     def camera_mat(self):
         camera_center = self.camera_center_world_coord
         translate: np.ndarray = -1 * np.dot(self._rotation_mat(), camera_center)
-        rt_mat = np.hstack((self._rotation_mat(), translate.transpose()))
+        rt_mat = np.hstack((self._rotation_mat(), translate.T))
         camera_mat = np.dot(self._calibration_mat(), rt_mat)
         return camera_mat
+
+    def depth(self, world_point):
+        camera_center = self.camera_center_world_coord
+        M = self.camera_mat()[:, :3]
+        T = 1
+        m3_t = M[2]
+        w = np.dot(m3_t, (world_point - camera_center))
+        sign_det_M = np.sign(np.linalg.det(M))
+        depth = sign_det_M * w / T / np.linalg.norm(m3_t.T)
+        return depth
