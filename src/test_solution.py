@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
+from pyparsing import FollowedBy
 
 # from src.solution import *
 import solution
-from singleview_Geometry import Camera_Model
+from Singleview_Geometry import Camera_Model
 
 if __name__ == "__main__":
 
@@ -31,10 +32,12 @@ if __name__ == "__main__":
     #     "data/input/stereo_pair1.jpg", "data/input/stereo_pair2.jpg"
     # )
 
-    camera_model = Camera_Model(
-        0.5, np.array([0.5, 0.5]), np.array([1, 2, 3]), np.array([0.1, 0.2, 0.3])
-    )
+    focal_len = 0.5
+    center_offset = np.array([0.5, 0.5])
+    rotate_angle = np.array([1, 2, 3])
+    camera_center = np.array([0.1, 0.2, 0.3])
+    camera_model = Camera_Model(focal_len, center_offset, rotate_angle, camera_center)
     camera_mat = camera_model.camera_mat()
-    ret = camera_model.depth(world_point=np.array([0.5,0.5,0.5]))
+    ret = camera_model.depth(world_point=np.array([0.5, 0.5, 0.5]))
 
     print("hello")
