@@ -6,13 +6,13 @@ from Geometry import Geometry
 
 class Camera_Model(Geometry):
     def __init__(
-        self,
-        focal_len: float,
-        center_offset: np.ndarray,
-        rotate_angle: np.ndarray,
-        camera_center_world_coord: np.ndarray,
-        pix_factor=np.array([1, 1]),
-        distorb=0,
+            self,
+            focal_len: float,
+            center_offset: np.ndarray,
+            rotate_angle: np.ndarray,
+            camera_center_world_coord: np.ndarray,
+            pix_factor=np.array([1, 1]),
+            distorb=0,
     ):
         self.focal_len = focal_len
         self.rotate_angle = rotate_angle
@@ -30,53 +30,46 @@ class Camera_Model(Geometry):
         focal_len = self.focal_len
         camera_offset = self.center_offset
         distorb = self.distorb
-        mat = np.mat(
-            [
-                [focal_len, distorb, camera_offset[0]],
-                [0, focal_len, camera_offset[1]],
-                [0, 0, 1],
-            ]
-        )
+        mat = np.mat([
+            [focal_len, distorb, camera_offset[0]],
+            [0, focal_len, camera_offset[1]],
+            [0, 0, 1],
+        ])
         return mat
 
     def _rotation_mat(self):
         rotate_angle = self.rotate_angle
         roll, pitch, yaw = rotate_angle[0], rotate_angle[1], rotate_angle[2]
-        rot_mat_roll = np.mat(
-            [
-                [np.cos(roll), -np.sin(roll), 0],
-                [np.sin(roll), np.cos(roll), 0],
-                [0, 0, 1],
-            ]
-        )
-        rot_mat_pitch = np.mat(
-            [
-                [np.cos(pitch), 0, np.sin(pitch)],
-                [0, 1, 0],
-                [-np.sin(pitch), 0, np.cos(pitch)],
-            ]
-        )
-        rot_mat_yaw = np.mat(
-            [
-                [1, 0, 0],
-                [0, np.cos(yaw), -np.sin(yaw)],
-                [0, np.sin(yaw), np.cos(yaw)],
-            ]
-        )
+        rot_mat_roll = np.mat([
+            [np.cos(roll), -np.sin(roll), 0],
+            [np.sin(roll), np.cos(roll), 0],
+            [0, 0, 1],
+        ])
+        rot_mat_pitch = np.mat([
+            [np.cos(pitch), 0, np.sin(pitch)],
+            [0, 1, 0],
+            [-np.sin(pitch), 0, np.cos(pitch)],
+        ])
+        rot_mat_yaw = np.mat([
+            [1, 0, 0],
+            [0, np.cos(yaw), -np.sin(yaw)],
+            [0, np.sin(yaw), np.cos(yaw)],
+        ])
         rotation_mat = np.dot(np.dot(rot_mat_roll, rot_mat_pitch), rot_mat_yaw)
         return rotation_mat
 
     def world2camera(self):
         camera_center = self.camera_center_world_coord
         R = self._rotation_mat()
-        upper = np.hstack((R, -1 * np.dot(R,camera_center)))
+        upper = np.hstack((R, -1 * np.dot(R, camera_center)))
         lower = np.hstack((self.zeroVector(3), 1))
         mat = np.vstack((upper, lower))
         return mat
 
     def camera_mat(self):
         camera_center = self.camera_center_world_coord
-        translate: np.ndarray = -1 * np.dot(self._rotation_mat(), camera_center)
+        translate: np.ndarray = -1 * np.dot(self._rotation_mat(),
+                                            camera_center)
         rt_mat = np.hstack((self._rotation_mat(), translate.T))
         camera_mat = np.dot(self._calibration_mat(), rt_mat)
         return camera_mat
@@ -90,3 +83,7 @@ class Camera_Model(Geometry):
         sign_det_M = np.sign(np.linalg.det(M))
         depth = sign_det_M * w / T / np.linalg.norm(m3_t.T)
         return depth
+
+
+# class Affine_Camera(Camera_Model):
+#     def __init__():

@@ -29,7 +29,8 @@ class Geometry:
 class PlanarGeometry(Geometry):
     def point_lies_on_theline(self, x: np.ndarray, line: np.ndarray):
         x = x.transpose()
-        assert x.shape[0] == 3 and x.shape == line.shape, "incorrect input shape"
+        assert x.shape[
+            0] == 3 and x.shape == line.shape, "incorrect input shape"
         return False if np.dot(x, line) else True
 
     def intersection_of_lines(self, line1, line2):
@@ -58,34 +59,30 @@ class PlanarGeometry(Geometry):
 
         # assert point.shape[0] == 2 or point, 'incorrect point shape'
         theta = theta * np.pi / 180
-        isom_matrix = np.mat(
-            [
-                [eps * np.cos(theta), -np.sin(theta), t[0]],
-                [eps * np.sin(theta), np.cos(theta), t[1]],
-                [0, 0, 1],
-            ]
-        )
+        isom_matrix = np.mat([
+            [eps * np.cos(theta), -np.sin(theta), t[0]],
+            [eps * np.sin(theta), np.cos(theta), t[1]],
+            [0, 0, 1],
+        ])
         # homogenization for single point
         point = np.array(
-            [point[0] * homo_factor, point[1] * homo_factor, homo_factor]
-        ).reshape((3, 1))
+            [point[0] * homo_factor, point[1] * homo_factor,
+             homo_factor]).reshape((3, 1))
 
         ret = np.dot(isom_matrix, point)
         return ret
 
     def similarity_trans2d(self, point, theta, t, s, homo_factor=1):
         theta = theta * np.pi / 180
-        simi_matrix = np.mat(
-            [
-                [s * np.cos(theta), -s * np.sin(theta), t[0]],
-                [s * np.sin(theta), s * np.cos(theta), t[2]],
-                [0, 0, 1],
-            ]
-        )
+        simi_matrix = np.mat([
+            [s * np.cos(theta), -s * np.sin(theta), t[0]],
+            [s * np.sin(theta), s * np.cos(theta), t[2]],
+            [0, 0, 1],
+        ])
 
         point = np.array(
-            [point[0] * homo_factor, point[1] * homo_factor, homo_factor]
-        ).reshape((3, 1))
+            [point[0] * homo_factor, point[1] * homo_factor,
+             homo_factor]).reshape((3, 1))
         ret = np.dot(simi_matrix, point)
         return ret
 
@@ -99,8 +96,8 @@ class Estimation_2D(Geometry):
             return np.array([x[0], x[1], 0]).reshape((3, 1))
         else:
             return np.array(
-                [x[0] / homo_factor, x[1] / homo_factor, homo_factor]
-            ).reshape((3, 1))
+                [x[0] / homo_factor, x[1] / homo_factor, homo_factor]).reshape(
+                    (3, 1))
 
     def direct_linear_trans(self, x1, x2, homo_factor1=1, homo_factor2=1):
         if x1[0].shape == 2:
@@ -108,43 +105,25 @@ class Estimation_2D(Geometry):
             x2 = [self._homogenization(x, homo_factor2) for x in x2]
         # x2 = H x1
         mat_list = [
-            np.mat(
-                [
-                    np.c_[
-                        self.zeroVector(3),
-                        -x2[i][2, 0] * x1[i].transpose(),
-                        x2[i][1, 0] * x1[i].transpose(),
-                    ].squeeze(),
-                    np.c_[
-                        x2[i][2, 0] * x1[i].transpose(),
-                        self.zeroVector(3),
-                        -x2[i][0, 0] * x1[i].transpose(),
-                    ].squeeze(),
-                    np.c_[
-                        -x2[i][1, 0] * x1[i].transpose(),
-                        x2[i][0, 0] * x1[i].transpose(),
-                        self.zeroVector(3),
-                    ].squeeze(),
-                ]
-            )
-            for i in range(4)
+            np.mat([
+                np.c_[self.zeroVector(3), -x2[i][2, 0] * x1[i].transpose(),
+                      x2[i][1, 0] * x1[i].transpose(), ].squeeze(),
+                np.c_[x2[i][2, 0] * x1[i].transpose(),
+                      self.zeroVector(3),
+                      -x2[i][0, 0] * x1[i].transpose(), ].squeeze(),
+                np.c_[-x2[i][1, 0] * x1[i].transpose(),
+                      x2[i][0, 0] * x1[i].transpose(),
+                      self.zeroVector(3), ].squeeze(),
+            ]) for i in range(4)
         ]
         linearly_inde_mat_list = [
-            np.mat(
-                [
-                    np.c_[
-                        self.zeroVector(3),
-                        -x2[i][2, 0] * x1[i].transpose(),
-                        x2[i][1, 0] * x1[i].transpose(),
-                    ].squeeze(),
-                    np.c_[
-                        x2[i][2, 0] * x1[i].transpose(),
-                        self.zeroVector(3),
-                        -x2[i][0, 0] * x1[i].transpose(),
-                    ].squeeze(),
-                ]
-            )
-            for i in range(4)
+            np.mat([
+                np.c_[self.zeroVector(3), -x2[i][2, 0] * x1[i].transpose(),
+                      x2[i][1, 0] * x1[i].transpose(), ].squeeze(),
+                np.c_[x2[i][2, 0] * x1[i].transpose(),
+                      self.zeroVector(3),
+                      -x2[i][0, 0] * x1[i].transpose(), ].squeeze(),
+            ]) for i in range(4)
         ]
 
         mat = np.concatenate(mat_list)
@@ -164,9 +143,8 @@ class Estimation_2D(Geometry):
         points = args[0]
         centroid = args[1]
         for point in points:
-            dist += np.sqrt(
-                (x * point[0] - centroid[0]) ** 2 + (x * point[1] - centroid[1]) ** 2
-            )
+            dist += np.sqrt((x * point[0] - centroid[0])**2 +
+                            (x * point[1] - centroid[1])**2)
         return dist / len(args[0]) - np.sqrt(2)
 
     def _isotropic_scaling(self, points):
@@ -180,21 +158,24 @@ class Estimation_2D(Geometry):
 
         scale = fsolve(self._func1, 0, args=(points, t))[0]
         # create matrix
-        trans_mat = np.array([[scale, 0, -t[0][0]], [0, scale, -t[1][0]], [0, 0, 1]])
+        trans_mat = np.array([[scale, 0, -t[0][0]], [0, scale, -t[1][0]],
+                              [0, 0, 1]])
         return trans_mat
 
     def normalized_DLT(self, points1, points2, homo_factor1=1, homo_factor2=1):
         # 计算相似变换
-        T1, T2 = self._isotropic_scaling(points1), self._isotropic_scaling(points2)
+        T1, T2 = self._isotropic_scaling(points1), self._isotropic_scaling(
+            points2)
         # 齐次化
-        points1, points2 = [self._homogenization(point1) for point1 in points1], [
-            self._homogenization(point2) for point2 in points2
-        ]
+        points1, points2 = [
+            self._homogenization(point1) for point1 in points1
+        ], [self._homogenization(point2) for point2 in points2]
         # 归一化
         points1_t = [np.dot(T1, point1) for point1 in points1]
         points2_t = [np.dot(T2, point2) for point2 in points2]
         # 计算估计单应
-        H_e = self.direct_linear_trans(points1_t, points2_t, homo_factor1, homo_factor2)
+        H_e = self.direct_linear_trans(points1_t, points2_t, homo_factor1,
+                                       homo_factor2)
         # 解除归一化
         H = np.dot(np.dot(np.linalg.inv(T2), H_e), T1)
         return H
@@ -218,9 +199,8 @@ class Estimation_2D(Geometry):
                     if dist < dist_thres:
                         num_inner_point += 1
             epsilon = 1 - num_inner_point / num_set
-            sample_thres = np.log(1 - p) // np.log(
-                1 - np.power((1 - epsilon), num_sampling)
-            )
+            sample_thres = np.log(1 - p) // np.log(1 - np.power(
+                (1 - epsilon), num_sampling))
             sample_count += 1
 
         size_thres = (1 - epsilon) * num_set
@@ -239,8 +219,7 @@ class Estimation_2D(Geometry):
         """
 
         sample_thres, size_thres = self._adaptive_num_sampling(
-            set_, dist_thres=dist_thres, num_sampling=num_sampling
-        )
+            set_, dist_thres=dist_thres, num_sampling=num_sampling)
 
         ret_list = []
         for i in range(int(sample_thres)):
@@ -271,12 +250,12 @@ class Estimation_2D(Geometry):
         return new_model, ret_point
 
     def _best_matching(
-        self,
-        target_img,
-        reference_img,
-        target_corner,
-        block_size=(10, 10),
-        search_block_size=(10, 10),
+            self,
+            target_img,
+            reference_img,
+            target_corner,
+            block_size=(10, 10),
+            search_block_size=(10, 10),
     ):
         assert target_img.shape == (800, 600)
         target_rows, target_cols = target_img.shape
@@ -284,28 +263,26 @@ class Estimation_2D(Geometry):
         for coord in tqdm(target_corner):
             ssd = MAX_NUM
             target_block = target_img[
-                max(0, coord[0] - block_size[0] // 2) : min(
-                    coord[0] + block_size[0] // 2, target_rows
-                ),
-                max(0, coord[1] - block_size[1] // 2) : min(
-                    coord[1] + block_size[1] // 2, target_cols
-                ),
-            ].astype(np.int)
+                max(0, coord[0] -
+                    block_size[0] // 2):min(coord[0] +
+                                            block_size[0] // 2, target_rows),
+                max(0, coord[1] -
+                    block_size[1] // 2):min(coord[1] + block_size[1] //
+                                            2, target_cols), ].astype(np.int)
             for i, j in product(
-                range(-search_block_size[0], search_block_size[0]),
-                range(-search_block_size[1], search_block_size[1]),
+                    range(-search_block_size[0], search_block_size[0]),
+                    range(-search_block_size[1], search_block_size[1]),
             ):
                 x, y = coord[0] + i, coord[1] + j
                 reference_block = reference_img[
-                    max(0, x - block_size[0] // 2) : min(
-                        max(0, x + block_size[0] // 2), target_rows
-                    ),
-                    max(0, y - block_size[1] // 2) : min(
-                        max(0, y + block_size[1] // 2), target_cols
-                    ),
-                ].astype(np.int)
+                    max(0, x - block_size[0] //
+                        2):min(max(0, x + block_size[0] // 2), target_rows),
+                    max(0, y -
+                        block_size[1] // 2):min(max(0, y + block_size[1] //
+                                                    2), target_cols), ].astype(
+                                                        np.int)
                 if reference_block.shape == target_block.shape:
-                    temp_ssd = np.sum((target_block - reference_block) ** 2)
+                    temp_ssd = np.sum((target_block - reference_block)**2)
                     if temp_ssd < ssd:
                         ssd = temp_ssd
                         matching = (coord, (x, y), ssd)
@@ -316,14 +293,13 @@ class Estimation_2D(Geometry):
         #     if match not in new_list:
         #         new_list.append(match)
 
-        
         # print('hello')
 
         # my_dict = {}
         # var = 0
         # for index, target_coord in enumerate(best_matching):
         #     if target_coord[0] not in my_dict:
-        #         my_dict[target_coord[0]] = target_coord[2] 
+        #         my_dict[target_coord[0]] = target_coord[2]
         #     elif target_coord[2] < my_dict[target_coord[0]]:
         #         var += 1
         #         print(var)
@@ -339,16 +315,18 @@ class Estimation_2D(Geometry):
     ):
         if resize:
             target_img = cv2.resize(target_img, None, fx=resize, fy=resize)
-            reference_img = cv2.resize(reference_img, None, fx=resize, fy=resize)
+            reference_img = cv2.resize(reference_img,
+                                       None,
+                                       fx=resize,
+                                       fy=resize)
         target_grayimg = cv2.cvtColor(target_img, cv2.COLOR_BGR2GRAY)
         reference_grayimg = cv2.cvtColor(reference_img, cv2.COLOR_BGR2GRAY)
         if corner_detector == 'harris':
-            target_corner = utils.ImageProc.harris_detector(
-                self, target_grayimg, filt_thres=0.1
-            )
+            target_corner = utils.ImageProc.harris_detector(self,
+                                                            target_grayimg,
+                                                            filt_thres=0.1)
             reference_corner = utils.ImageProc.harris_detector(
-                self, reference_grayimg, filt_thres=0.1
-            )
+                self, reference_grayimg, filt_thres=0.1)
         best_matching_target = self._best_matching(
             target_grayimg,
             reference_grayimg,
@@ -374,14 +352,14 @@ class Estimation_2D(Geometry):
                 return np.array([x[0], x[1], 0]).reshape((3, 1))
             else:
                 return np.array(
-                    [x[0] / homo_factor, x[1] / homo_factor, homo_factor]
-                ).reshape((3, 1))
+                    [x[0] / homo_factor, x[1] / homo_factor,
+                     homo_factor]).reshape((3, 1))
 
         def algebraic_dist(self, x1, x2):
-            x1 = self._homogenization(x1).transpose().reshape((3,))
-            x2 = self._homogenization(x2).transpose().reshape((3,))
+            x1 = self._homogenization(x1).transpose().reshape((3, ))
+            x2 = self._homogenization(x2).transpose().reshape((3, ))
             a = np.cross(x1, x2)
-            return a[0] ** 2 + a[1] ** 2
+            return a[0]**2 + a[1]**2
 
         def geometric_dist(self, x, x_m, x_b, x_p, H, single_image=False):
             """param description

@@ -14,9 +14,12 @@ class ImageProc:
             image_list.append(img)
         return image_list
 
-    def harris_detector(
-        self, img, gray=False, draw_path=None, resize=0, filt_thres=0.01
-    ):
+    def harris_detector(self,
+                        img,
+                        gray=False,
+                        draw_path=None,
+                        resize=0,
+                        filt_thres=0.01):
         if resize:
             rows, cols, _channels = map(int, img.shape)
             # img = cv2.pyrDown(img, dstsize=(cols//resize, rows//resize))
@@ -87,9 +90,8 @@ def curve_fit_2D(sample_points, func=line_func_2D):
 
 
 def dist_btw_point_line(point, line):
-    dist = np.abs(line[0] * point[0] + line[1] * point[1] + line[2]) / np.sqrt(
-        line[0] ** 2 + line[1] ** 2
-    )
+    dist = np.abs(line[0] * point[0] + line[1] * point[1] +
+                  line[2]) / np.sqrt(line[0]**2 + line[1]**2)
     return dist
 
 
