@@ -17,3 +17,6 @@ class Geometry(object):
             return np.zeros((1, dims))
         elif axis == 1:
             return np.zeros((dims, 1))
+
+    def vec1D_transpose(self, vector : np.ndarray):
+        return vector.reshape((vector.shape[0], 1))

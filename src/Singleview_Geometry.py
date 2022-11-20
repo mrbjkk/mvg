@@ -1,5 +1,7 @@
+import scipy
 import numpy as np
 import cv2
+
 
 from Geometry import Geometry
 
@@ -84,6 +86,31 @@ class Camera_Model(Geometry):
         depth = sign_det_M * w / T / np.linalg.norm(m3_t.T)
         return depth
 
+
+class Camera_Despose(Geometry):
+    def __init__(self, camera_mat):
+        assert isinstance(camera_mat, np.ndarray) or isinstance(
+            camera_mat, np.matrix
+        ), f'incorrect camera_mat type: f{type(camera_mat)}, np.matrix or np.ndarray is expected'
+        self.camera_mat = camera_mat
+
+    def get_camera_center(self):
+        camera_mat = self.camera_mat
+        p = []
+        for col in range(camera_mat.shape[1]):
+            p.append(camera_mat[:,col].reshape((3,1)))
+        
+        x = np.linalg.det(np.concatenate((p[1], p[2], p[3]), axis=1))
+        y = -1 * np.linalg.det(np.concatenate((p[0], p[2], p[3]), axis=1))
+        z = np.linalg.det(np.concatenate((p[0], p[1], p[3]), axis=1))
+        t = -1 * np.linalg.det(np.concatenate((p[0], p[1], p[2]), axis=1))
+        return self.vec1D_transpose(np.array([x, y, z, t]))
+
+    def get_matrix(self):
+        camera_mat = self.camera_mat
+        M = camera_mat[:, :3]
+        q, r = np.linalg.qr(M)
+        return r, q
 
 # class Affine_Camera(Camera_Model):
 #     def __init__():
