@@ -8,7 +8,8 @@ class Geometry(object):
 
     def homogenization(self, x: np.ndarray, homo_factor=1):
         assert isinstance(
-            type(x), np.ndarray), 'Incorrect input type, ndarray is expected'
+            type(x), np.ndarray
+        ), "Incorrect input type, ndarray is expected"
         if homo_factor == 0:
             return np.expand_dims(x)
 
@@ -18,5 +19,5 @@ class Geometry(object):
         elif axis == 1:
             return np.zeros((dims, 1))
 
-    def vec1D_transpose(self, vector : np.ndarray):
+    def vec1D_transpose(self, vector: np.ndarray):
         return vector.reshape((vector.shape[0], 1))
