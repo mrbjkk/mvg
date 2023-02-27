@@ -21,3 +21,17 @@ class Geometry(object):
 
     def vec1D_transpose(self, vector: np.ndarray):
         return vector.reshape((vector.shape[0], 1))
+
+
+class AnalyticGeometry(Geometry):
+    def centroid(points):
+        """ get the centroid of a set of points
+        x -- a list of points
+        return the centroid of a set of 2D points
+        """
+        n = len(points)
+        x, y = 0, 0
+        for point in points:
+            x += point[0]
+            y += point[1]
+        return np.array([x / n, y / n])

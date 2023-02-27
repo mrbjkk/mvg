@@ -106,4 +106,3 @@ def show_matching(target_img, reference_img, point_pairs):
             color=(0, 255, 0),
         )
     cv2.imwrite('data/output/matching.jpg', splicing_img)
-    print('hello')
